@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse de Rentabilité Complète : Solaire + Batterie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .input-group { display: flex; align-items: center; margin-bottom: 1rem; }
+        .input-group label { width: 200px; margin-right: 1rem; font-size: 0.875rem; color: #4B5563; }
+        .input-group input { flex: 1; padding: 0.5rem; border-radius: 0.375rem; border: 1px solid #D1D5DB; text-align: right; }
+        .input-group .unit { margin-left: 0.5rem; font-size: 0.875rem; color: #6B7280; }
+        #loading_message { transition: opacity 0.3s ease-in-out; }
+        .result-card { background-color: #F9FAFB; border: 1px solid #E5E7EB; padding: 1rem; border-radius: 0.5rem; text-align: center; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Analyse de Rentabilité Complète</h1>
+            <p class="mt-2 text-lg text-gray-600">Optimisation des coûts et des revenus pour un système Solaire + Batterie.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Colonne des Paramètres -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 border-b pb-4">Paramètres du Projet</h2>
+
+                <h3 class="text-lg font-semibold mb-3 text-indigo-700">Installation Solaire</h3>
+                <div class="input-group">
+                    <label for="solar_capacity">Puissance Crête PV</label>
+                    <input type="number" id="solar_capacity" value="5">
+                    <span class="unit">kWp</span>
+                </div>
+
+                <h3 class="text-lg font-semibold mb-3 mt-6 text-indigo-700">Système de Batterie</h3>
+                <div class="input-group">
+                    <label for="battery_power">Puissance Batterie</label>
+                    <input type="number" id="battery_power" value="3">
+                    <span class="unit">kW</span>
+                </div>
+                <div class="input-group">
+                    <label for="battery_capacity">Capacité Batterie</label>
+                    <input type="number" id="battery_capacity" value="10">
+                    <span class="unit">kWh</span>
+                </div>
+                 <div class="input-group">
+                    <label for="battery_efficiency">Rendement A/R</label>
+                    <input type="number" id="battery_efficiency" value="90">
+                    <span class="unit">%</span>
+                </div>
+                 <div class="input-group">
+                    <label for="investment_power">Coût Inv. Puissance</label>
+                    <input type="number" id="investment_power" value="250">
+                    <span class="unit">€/kW</span>
+                </div>
+                 <div class="input-group">
+                    <label for="investment_energy">Coût Inv. Énergie</label>
+                    <input type="number" id="investment_energy" value="525">
+                    <span class="unit">€/kWh</span>
+                </div>
+                <div class="input-group">
+                    <label for="battery_lifetime">Durée de vie (cycles)</label>
+                    <input type="number" id="battery_lifetime" value="6000">
+                    <span class="unit">cycles</span>
+                </div>
+
+
+                <h3 class="text-lg font-semibold mb-3 mt-6 text-indigo-700">Consommation & Tarifs</h3>
+                 <div class="input-group">
+                    <label for="daily_consumption">Conso. Journalière</label>
+                    <input type="number" id="daily_consumption" value="15">
+                    <span class="unit">kWh</span>
+                </div>
+                <div class="input-group">
+                    <label for="purchase_price">Prix Achat Réseau</label>
+                    <input type="number" id="purchase_price" step="0.01" value="0.25">
+                    <span class="unit">€/kWh</span>
+                </div>
+                <div class="input-group">
+                    <label for="sell_price">Tarif Rachat Surplus</label>
+                    <input type="number" id="sell_price" step="0.01" value="0.10">
+                    <span class="unit">€/kWh</span>
+                </div>
+                
+                <h3 class="text-lg font-semibold mb-3 mt-6 text-indigo-700">Financier</h3>
+                <div class="input-group">
+                    <label for="discount_rate">Taux d'actualisation</label>
+                    <input type="number" id="discount_rate" value="5">
+                    <span class="unit">%</span>
+                </div>
+
+                <div class="mt-8">
+                    <button id="calculate_button" class="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300">
+                        Lancer l'Analyse de Rentabilité
+                    </button>
+                </div>
+            </div>
+
+            <!-- Colonne des Résultats -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-lg">
+                <h2 class="text-2xl font-bold mb-6 border-b pb-4">Résultats de l'Analyse</h2>
+                <div id="results_summary" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center mb-6">
+                        <div class="result-card">
+                            <h3 class="text-sm font-medium text-gray-500">Coût d'Investissement Batterie</h3>
+                            <p id="battery_investment_cost" class="text-xl font-bold text-gray-800 mt-1">--</p>
+                        </div>
+                        <div class="result-card">
+                            <h3 class="text-sm font-medium text-gray-500">Économies Annuelles (An 1)</h3>
+                            <p id="annual_savings" class="text-xl font-bold text-green-600 mt-1">--</p>
+                        </div>
+                        <div class="result-card">
+                            <h3 class="text-sm font-medium text-gray-500">Retour sur Investissement (Simple)</h3>
+                            <p id="payback_period" class="text-xl font-bold text-indigo-600 mt-1">--</p>
+                        </div>
+                        <div class="result-card">
+                            <h3 class="text-sm font-medium text-gray-500">Durée de vie du projet</h3>
+                            <p id="project_lifetime" class="text-xl font-bold text-gray-800 mt-1">--</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 border-t pt-6">
+                         <h3 class="text-xl font-bold text-center mb-4">Analyse Financière sur la Durée de Vie</h3>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                            <div class="result-card bg-indigo-50">
+                                <h3 class="text-sm font-medium text-gray-500">Valeur Actuelle Nette (VAN)</h3>
+                                <p id="npv_result" class="text-3xl font-bold text-indigo-700 mt-1">--</p>
+                            </div>
+                             <div class="result-card bg-green-50">
+                                <h3 class="text-sm font-medium text-gray-500">LCOE du Système</h3>
+                                <p id="lcoe_result" class="text-3xl font-bold text-green-700 mt-1">--</p>
+                            </div>
+                         </div>
+                    </div>
+
+                    <div class="relative h-96 mt-8">
+                        <canvas id="flowChart"></canvas>
+                    </div>
+                </div>
+                 <p id="loading_message" class="text-center text-gray-500 mt-4 hidden">Analyse en cours, veuillez patienter...</p>
+                 <div id="welcome_message" class="text-center text-gray-500 mt-16">
+                    <p>Veuillez configurer votre projet et lancer l'analyse pour voir les résultats.</p>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const calculateButton = document.getElementById('calculate_button');
+        const loadingMessage = document.getElementById('loading_message');
+        const resultsSummary = document.getElementById('results_summary');
+        const welcomeMessage = document.getElementById('welcome_message');
+        let flowChart = null;
+
+        function generateSolarProfile(solarCapacity) {
+            const profile = [];
+            for (let i = 0; i < 8760; i++) {
+                const day = Math.floor(i / 24);
+                const hour = i % 24;
+                const seasonalFactor = 1 - 0.6 * Math.cos((day / 365) * 2 * Math.PI);
+                let hourlyFactor = 0;
+                if (hour > 6 && hour < 20) { hourlyFactor = Math.sin(((hour - 6) / 14) * Math.PI); }
+                const production = solarCapacity * seasonalFactor * hourlyFactor * (0.8 + Math.random() * 0.4);
+                profile.push(Math.max(0, production));
+            }
+            return profile;
+        }
+
+        function generateConsumptionProfile(dailyConsumption) {
+            const profile = [];
+            const annualConsumption = dailyConsumption * 365;
+            const hourlyConsumptionFactors = [0.03,0.02,0.02,0.02,0.03,0.04,0.06,0.07,0.06,0.05,0.04,0.04,0.04,0.04,0.04,0.05,0.06,0.07,0.08,0.09,0.07,0.05,0.04,0.03];
+            for (let i = 0; i < 8760; i++) {
+                const hour = i % 24;
+                const consumption = annualConsumption / 365 * hourlyConsumptionFactors[hour] * (0.9 + Math.random() * 0.2);
+                profile.push(consumption);
+            }
+            return profile;
+        }
+
+        calculateButton.addEventListener('click', () => {
+            welcomeMessage.classList.add('hidden');
+            loadingMessage.classList.remove('hidden');
+            resultsSummary.classList.add('hidden');
+            setTimeout(runAnalysis, 50); 
+        });
+
+        function runAnalysis() {
+            // --- 1. Récupérer les paramètres ---
+            const solar_capacity = parseFloat(document.getElementById('solar_capacity').value);
+            const battery_power_kw = parseFloat(document.getElementById('battery_power').value);
+            const battery_capacity_kwh = parseFloat(document.getElementById('battery_capacity').value);
+            const battery_efficiency = parseFloat(document.getElementById('battery_efficiency').value) / 100;
+            const battery_lifetime_cycles = parseFloat(document.getElementById('battery_lifetime').value);
+            const investment_power_cost = parseFloat(document.getElementById('investment_power').value);
+            const investment_energy_cost = parseFloat(document.getElementById('investment_energy').value);
+            const daily_consumption = parseFloat(document.getElementById('daily_consumption').value);
+            const purchase_price = parseFloat(document.getElementById('purchase_price').value);
+            const sell_price = parseFloat(document.getElementById('sell_price').value);
+            const discount_rate = parseFloat(document.getElementById('discount_rate').value) / 100;
+
+            // --- 2. Générer les profils ---
+            const solarProduction = generateSolarProfile(solar_capacity);
+            const consumption = generateConsumptionProfile(daily_consumption);
+
+            // --- 3. Lancer la simulation d'optimisation ---
+            // FIX: Correctly destructure all required values from the optimize function
+            const { annualBill: billWithBattery, totalDischarged, directSelfConsumption, fromBatteryConsumption, energyFlows } = optimize(solarProduction, consumption, battery_power_kw, battery_capacity_kwh, battery_efficiency, purchase_price, sell_price);
+            const { annualBill: billWithoutBattery } = optimize(solarProduction, consumption, 0, 0, 0, purchase_price, sell_price);
+
+            // --- 4. Calculer la rentabilité simple ---
+            const batteryInvestmentCost = (investment_power_cost * battery_power_kw) + (investment_energy_cost * battery_capacity_kwh);
+            const annualSavings = billWithoutBattery - billWithBattery;
+            const paybackPeriod = batteryInvestmentCost > 0 && annualSavings > 0 ? batteryInvestmentCost / annualSavings : Infinity;
+
+            // --- 5. Calculer la durée de vie du projet ---
+            const annualCycles = totalDischarged > 0 ? totalDischarged / battery_capacity_kwh : 0;
+            const projectLifetime = annualCycles > 0 ? battery_lifetime_cycles / annualCycles : Infinity;
+
+            // --- 6. Analyse Financière sur la Durée de Vie ---
+            let npv = -batteryInvestmentCost;
+            let totalDiscountedConsumption = 0;
+            if (isFinite(projectLifetime)) {
+                for (let n = 1; n <= projectLifetime; n++) {
+                    const discountFactor = 1 / Math.pow(1 + discount_rate, n);
+                    npv += annualSavings * discountFactor;
+                    
+                    // FIX: Use the calculated self-consumption values
+                    const selfConsumed = (directSelfConsumption + fromBatteryConsumption);
+                    totalDiscountedConsumption += (selfConsumed) * discountFactor;
+                }
+            }
+
+            const lcoe = totalDiscountedConsumption > 0 ? batteryInvestmentCost / totalDiscountedConsumption : Infinity;
+
+            // --- 7. Mettre à jour les résultats ---
+            document.getElementById('battery_investment_cost').textContent = `${formatCurrency(batteryInvestmentCost)} €`;
+            document.getElementById('annual_savings').textContent = `${formatCurrency(annualSavings)} €`;
+            document.getElementById('payback_period').textContent = paybackPeriod > 0 && paybackPeriod < 100 ? `${paybackPeriod.toFixed(1)} ans` : "Non rentable";
+            document.getElementById('project_lifetime').textContent = isFinite(projectLifetime) ? `${projectLifetime.toFixed(1)} ans` : "N/A";
+            document.getElementById('npv_result').textContent = `${formatCurrency(npv)} €`;
+            document.getElementById('lcoe_result').textContent = isFinite(lcoe) ? `${(lcoe).toFixed(3)} €/kWh` : "N/A";
+            resultsSummary.classList.remove('hidden');
+
+            // --- 8. Mettre à jour le graphique ---
+            updateChart(energyFlows);
+            loadingMessage.classList.add('hidden');
+        }
+
+        function optimize(solarProduction, consumption, battery_power, battery_capacity, battery_efficiency, purchase_price, sell_price) {
+            let batterySoC = battery_capacity / 2;
+            let annualCost = 0;
+            let annualRevenue = 0;
+            let totalDischarged = 0;
+            let directSelfConsumption = 0;
+            let fromBatteryConsumption = 0;
+            const energyFlows = { consumption: [], solarToLoad: [], batteryToLoad: [], gridToLoad: [], batterySoC: [] };
+            const sqrt_efficiency = Math.sqrt(battery_efficiency);
+
+            for (let i = 0; i < 8760; i++) {
+                const solar = solarProduction[i];
+                const load = consumption[i];
+                const netLoad = load - solar;
+                let solarToLoad = 0, batteryToLoad = 0, gridToLoad = 0;
+
+                if (netLoad >= 0) { // Déficit
+                    solarToLoad = solar;
+                    const fromBattery = battery_power > 0 ? Math.min(netLoad, batterySoC * sqrt_efficiency, battery_power) : 0;
+                    batteryToLoad = fromBattery;
+                    if(battery_power > 0) {
+                        batterySoC -= fromBattery / sqrt_efficiency;
+                        totalDischarged += fromBattery;
+                    }
+                    gridToLoad = netLoad - fromBattery;
+                    annualCost += gridToLoad * purchase_price;
+                } else { // Surplus
+                    solarToLoad = load;
+                    const surplus = -netLoad;
+                    const toBattery = battery_power > 0 ? Math.min(surplus, (battery_capacity - batterySoC) / sqrt_efficiency, battery_power) : 0;
+                    if(battery_power > 0) batterySoC += toBattery * sqrt_efficiency;
+                    const toGrid = surplus - toBattery;
+                    annualRevenue += toGrid * sell_price;
+                }
+                
+                directSelfConsumption += solarToLoad;
+                fromBatteryConsumption += batteryToLoad;
+                energyFlows.consumption.push(load);
+                energyFlows.solarToLoad.push(solarToLoad);
+                energyFlows.batteryToLoad.push(batteryToLoad);
+                energyFlows.gridToLoad.push(gridToLoad);
+                energyFlows.batterySoC.push(batterySoC);
+            }
+            // FIX: Return all necessary values
+            return { annualBill: annualCost - annualRevenue, totalDischarged, directSelfConsumption, fromBatteryConsumption, energyFlows };
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+        }
+
+        function updateChart(flows) {
+            const ctx = document.getElementById('flowChart').getContext('2d');
+            const displayHours = 7 * 24;
+            const labels = Array.from({ length: displayHours }, (_, i) => `H${i + 1}`);
+
+            const chartData = {
+                labels: labels,
+                datasets: [
+                    { label: 'Consommation Totale', data: flows.consumption.slice(0, displayHours), borderColor: '#111827', type: 'line', yAxisID: 'y', tension: 0.3, borderWidth: 3, pointRadius: 0 },
+                    { label: 'Solaire Direct', data: flows.solarToLoad.slice(0, displayHours), backgroundColor: '#FBBF24', stack: 'sources', yAxisID: 'y' },
+                    { label: 'Depuis Batterie', data: flows.batteryToLoad.slice(0, displayHours), backgroundColor: '#34D399', stack: 'sources', yAxisID: 'y' },
+                    { label: 'Depuis Réseau', data: flows.gridToLoad.slice(0, displayHours), backgroundColor: '#EF4444', stack: 'sources', yAxisID: 'y' },
+                    { label: 'État de Charge Batterie (kWh)', data: flows.batterySoC.slice(0, displayHours), borderColor: '#6366F1', backgroundColor: 'rgba(99, 102, 241, 0.1)', type: 'line', yAxisID: 'y1', tension: 0.3, fill: true }
+                ]
+            };
+
+            if (flowChart) flowChart.destroy();
+            flowChart = new Chart(ctx, {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, type: 'linear', display: true, position: 'left', title: { display: true, text: 'Puissance (kW)' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Charge Batterie (kWh)' }, grid: { drawOnChartArea: false } }
+                    },
+                    plugins: { tooltip: { mode: 'index', intersect: false } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
